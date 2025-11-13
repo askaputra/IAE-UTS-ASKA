@@ -9,13 +9,31 @@ export const apiClient = axios.create({
   },
 });
 
-// User API calls
-export const userApi = {
-  getUsers: () => apiClient.get('/api/users'),
-  getUser: (id: string) => apiClient.get(`/api/users/${id}`),
-  createUser: (userData: { name: string; email: string; age: number }) => 
-    apiClient.post('/api/users', userData),
-  updateUser: (id: string, userData: { name?: string; email?: string; age?: number }) => 
-    apiClient.put(`/api/users/${id}`, userData),
-  deleteUser: (id: string) => apiClient.delete(`/api/users/${id}`),
+// Interceptor (ini sudah benar)
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('jwt_token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// API untuk Autentikasi
+export const authApi = {
+  login: (data: { email: string; password: string }) => 
+    apiClient.post('/api/auth/login', data),
+  
+  register: (data: { name: string; email: string; password: string }) => 
+    apiClient.post('/api/auth/register', data),
+    
+  getUsers: () => apiClient.get('/api/users'), 
+
+  // FUNGSI INI HARUS ADA:
+  joinTeam: (data: { teamId: string }) =>
+    apiClient.put('/api/users/join-team', data),
 };

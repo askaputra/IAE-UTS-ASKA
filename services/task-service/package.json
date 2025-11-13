@@ -1,7 +1,7 @@
 {
   "name": "graphql-api",
   "version": "1.0.0",
-  "description": "GraphQL API service with queries, mutations, and subscriptions",
+  "description": "GraphQL API service for Task Management",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,18 +9,23 @@
   },
   "dependencies": {
     "apollo-server-express": "^3.12.0",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "graphql": "^16.6.0",
     "graphql-subscriptions": "^2.0.0",
     "graphql-ws": "^5.12.1",
-    "ws": "^8.13.0",
     "uuid": "^9.0.0",
-    "cors": "^2.8.5"
+    "ws": "^8.13.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"
   },
-  "keywords": ["graphql", "apollo", "subscriptions"],
+  "keywords": [
+    "graphql",
+    "apollo",
+    "subscriptions",
+    "tasks"
+  ],
   "author": "",
   "license": "ISC"
 }

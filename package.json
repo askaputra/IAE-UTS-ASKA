@@ -1,19 +1,26 @@
 {
-  "name": "microservices-demo",
+  "name": "microservices-task-app",
   "version": "1.0.0",
-  "description": "Microservices demo with REST API, GraphQL, API Gateway, and Next.js frontend",
+  "description": "Microservices demo with REST (User) and GraphQL (Tasks)",
   "scripts": {
     "dev": "docker-compose -f docker-compose.dev.yml up --build",
     "start": "docker-compose up --build",
-    "stop": "docker-compose down",
+    "stop": "docker-compose down -v",
     "clean": "docker-compose down -v --rmi all",
-    "install:all": "npm run install:rest && npm run install:graphql && npm run install:gateway && npm run install:frontend",
-    "install:rest": "cd services/rest-api && npm install",
-    "install:graphql": "cd services/graphql-api && npm install",
+    "install:all": "npm run install:user && npm run install:task && npm run install:gateway && npm run install:frontend",
+    "install:user": "cd services/user-service && npm install",
+    "install:task": "cd services/task-service && npm install",
     "install:gateway": "cd api-gateway && npm install",
     "install:frontend": "cd frontend-app && npm install"
   },
-  "keywords": ["microservices", "rest", "graphql", "api-gateway", "nextjs"],
+  "keywords": [
+    "microservices",
+    "rest",
+    "graphql",
+    "api-gateway",
+    "nextjs",
+    "jwt"
+  ],
   "author": "",
   "license": "ISC"
 }

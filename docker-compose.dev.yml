@@ -2,31 +2,34 @@
 version: '3.8'
 
 services:
-  # REST API Service
-  rest-api:
-    build: ./services/rest-api
+  # User Service (REST) - Nama diubah dari rest-api
+  user-service:
+    build: ./services/user-service
     ports:
       - "3001:3001"
     environment:
-      - PORT=3001
+      - PORT=${USER_SERVICE_PORT:-3001}
       - NODE_ENV=development
+      - PRIVATE_KEY=${PRIVATE_KEY}
+      - PUBLIC_KEY=${PUBLIC_KEY}
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-RS256}
     volumes:
-      - ./services/rest-api:/app
+      - ./services/user-service:/app
       - /app/node_modules
     command: npm run dev
     networks:
       - microservices-network
 
-  # GraphQL API Service
-  graphql-api:
-    build: ./services/graphql-api
+  # Task Service (GraphQL) - Nama diubah dari graphql-api
+  task-service:
+    build: ./services/task-service
     ports:
       - "4000:4000"
     environment:
-      - PORT=4000
+      - PORT=${TASK_SERVICE_PORT:-4000}
       - NODE_ENV=development
     volumes:
-      - ./services/graphql-api:/app
+      - ./services/task-service:/app
       - /app/node_modules
     command: npm run dev
     networks:
@@ -38,13 +41,16 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - PORT=3000
-      - REST_API_URL=http://rest-api:3001
-      - GRAPHQL_API_URL=http://graphql-api:4000
+      - PORT=${PORT:-3000}
+      # Variabel lingkungan BARU (menggantikan REST_API_URL)
+      - USER_SERVICE_URL=http://user-service:3001
+      - TASK_SERVICE_URL=http://task-service:4000
       - NODE_ENV=development
+      - JWT_ALGORITHM=${JWT_ALGORITHM:-RS256}
     depends_on:
-      - rest-api
-      - graphql-api
+      # Sesuaikan dengan nama layanan BARU
+      - user-service
+      - task-service
     volumes:
       - ./api-gateway:/app
       - /app/node_modules
@@ -61,7 +67,7 @@ services:
       - "3002:3000"
     environment:
       - NEXT_PUBLIC_API_GATEWAY_URL=http://localhost:3000
-      - NEXT_PUBLIC_GRAPHQL_URL=http://localhost:4000/graphql
+      - NEXT_PUBLIC_GRAPHQL_URL=http://localhost:3000/graphql
     depends_on:
       - api-gateway
     volumes:
