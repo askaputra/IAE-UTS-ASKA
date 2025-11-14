@@ -33,7 +33,9 @@ export const authApi = {
     
   getUsers: () => apiClient.get('/api/users'), 
 
-  // FUNGSI INI HARUS ADA:
   joinTeam: (data: { teamId: string }) =>
     apiClient.put('/api/users/join-team', data),
+
+  // FUNGSI BARU DITAMBAHKAN:
+  checkToken: () => apiClient.get('/api/auth/check-token'),
 };

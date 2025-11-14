@@ -19,32 +19,15 @@ router.post('/register', validateUser, async (req, res) => {
   }
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
-
-  // LOGIKA PERAN (ROLE) BARU
-  // Jika email adalah 'admin@email.com', jadikan 'admin', selain itu 'user'
   const role = (email === 'admin@email.com') ? 'admin' : 'user';
-
   const newUser = {
-    id: uuidv4(),
-    name,
-    email,
-    password: hashedPassword,
-    teamId: null,
-    role: role, // Tambahkan peran
-    createdAt: new Date().toISOString(),
+    id: uuidv4(), name, email, password: hashedPassword, teamId: null, role: role, createdAt: new Date().toISOString(),
   };
   users.push(newUser);
   console.log(`User registered: ${newUser.email} (Role: ${newUser.role})`);
-  
   res.status(201).json({
     message: 'User created successfully',
-    user: { 
-      id: newUser.id, 
-      name: newUser.name, 
-      email: newUser.email, 
-      teamId: newUser.teamId,
-      role: newUser.role // Kirim peran ke frontend
-    }
+    user: { id: newUser.id, name: newUser.name, email: newUser.email, teamId: newUser.teamId, role: newUser.role }
   });
 });
 
@@ -61,39 +44,59 @@ router.post('/login', validateLogin, async (req, res) => {
     console.log('Login failed: password mismatch for', email);
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-
-  // TAMBAHKAN PERAN KE TOKEN
+  
   const payload = {
-    id: user.id,
-    email: user.email,
-    name: user.name, 
-    teamId: user.teamId,
-    role: user.role // Tambahkan peran ke token JWT
+    id: user.id, email: user.email, name: user.name, teamId: user.teamId, role: user.role
   };
 
+  // UBAH MASA BERLAKU TOKEN
   const token = jwt.sign(payload, PRIVATE_KEY, {
     algorithm: JWT_ALGORITHM,
-    expiresIn: '1h'
+    expiresIn: '7d' // Diubah dari 1 jam menjadi 7 hari
   });
+
   console.log('Login successful:', user.email);
-  
-  // Kirim peran ke frontend
   res.json({
     message: 'Login successful',
     token,
-    user: { 
-      id: user.id, 
-      name: user.name, 
-      email: user.email, 
-      teamId: user.teamId,
-      role: user.role
-    }
+    user: payload // Kirim payload lengkap
   });
 });
 
 // RUTE: GET /api/auth/public-key
 router.get('/public-key', (req, res) => {
   res.json({ publicKey: PUBLIC_KEY });
+});
+
+// RUTE BARU: GET /api/auth/check-token
+// Rute ini harus diproteksi oleh gateway. Jika request sampai di sini, tokennya valid.
+router.get('/check-token', (req, res) => {
+  // Data user diambil dari header yang disisipkan gateway (dari token LAMA)
+  const payload = {
+    id: req.headers['x-user-id'],
+    email: req.headers['x-user-email'],
+    name: req.headers['x-user-name'],
+    teamId: req.headers['x-user-teamid'],
+    role: req.headers['x-user-role']
+  };
+
+  if (!payload.id) {
+    return res.status(401).json({ error: 'Invalid token data provided by gateway' });
+  }
+
+  // Buat token BARU
+  const token = jwt.sign(payload, PRIVATE_KEY, {
+    algorithm: JWT_ALGORITHM,
+    expiresIn: '7d' // Buat token baru untuk 7 hari lagi
+  });
+
+  console.log(`Token refreshed for: ${payload.email}`);
+
+  // Kirim kembali token baru dan data user
+  res.json({
+    token,
+    user: payload
+  });
 });
 
 module.exports = router;

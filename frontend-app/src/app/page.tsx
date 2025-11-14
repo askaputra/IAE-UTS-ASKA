@@ -74,15 +74,44 @@ type Notification = { id: string; message: string };
 export default function Home() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [loadingApp, setLoadingApp] = useState(true); // <-- State loading baru
 
+  // EFEK BARU: Cek token saat aplikasi dimuat
   useEffect(() => {
-    const storedToken = localStorage.getItem('jwt_token');
-    const storedUser = localStorage.getItem('user_data');
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser)); // User object sekarang berisi 'role'
-    }
-  }, []);
+    const checkTokenValidity = async () => {
+      const storedToken = localStorage.getItem('jwt_token');
+      
+      if (!storedToken) {
+        setLoadingApp(false);
+        return; // Tidak ada token, berhenti (akan menampilkan halaman login)
+      }
+
+      try {
+        // Panggil endpoint baru. Interceptor akan menambahkan token lama.
+        const response = await authApi.checkToken();
+        const { token: newToken, user: newUser } = response.data;
+
+        // Sukses! Simpan token BARU
+        localStorage.setItem('jwt_token', newToken);
+        localStorage.setItem('user_data', JSON.stringify(newUser));
+        setToken(newToken);
+        setUser(newUser);
+        console.log('Token refreshed!');
+
+      } catch (err) {
+        // Token lama tidak valid (expired, dll)
+        console.log('Token check failed, logging out.');
+        localStorage.removeItem('jwt_token');
+        localStorage.removeItem('user_data');
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoadingApp(false);
+      }
+    };
+
+    checkTokenValidity();
+  }, []); // <-- [] berarti hanya jalan sekali saat app load
 
   const handleLogout = () => {
     localStorage.removeItem('jwt_token');
@@ -92,6 +121,16 @@ export default function Home() {
     window.location.reload(); 
   };
 
+  // Tampilkan layar loading saat token sedang dicek
+  if (loadingApp) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-2xl font-bold">Loading application...</p>
+      </div>
+    );
+  }
+
+  // Jika tidak loading, lanjutkan ke logika seperti biasa
   if (!token || !user) {
     return <AuthPage setToken={setToken} setUser={setUser} />;
   }
@@ -107,7 +146,6 @@ export default function Home() {
         <div>
           <span className="text-gray-700 mr-4">
             Welcome, {user.name} 
-            {/* Tampilkan peran user */}
             <span className="font-semibold text-blue-600"> ({user.role})</span>
           </span>
           <button
@@ -118,7 +156,6 @@ export default function Home() {
           </button>
         </div>
       </header>
-      {/* Kirim user object ke TaskBoard */}
       <TaskBoard user={user} />
     </div>
   );
